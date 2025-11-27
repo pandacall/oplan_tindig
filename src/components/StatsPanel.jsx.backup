@@ -1,0 +1,134 @@
+import { ChevronRight, ChevronLeft, RefreshCw } from 'lucide-react'
+
+function StatsPanel({ cellSites, isOpen, onToggle, dataTimestamp, onClearCache }) {
+  const total = cellSites.length
+  const operational = cellSites.filter(s => s.status === 'operational').length
+  const nonOperational = cellSites.filter(s => s.status === 'non-operational').length
+  const highRisk = cellSites.filter(s => s.riskLevel === 'high').length
+  const mediumRisk = cellSites.filter(s => s.riskLevel === 'medium').length
+  const lowRisk = cellSites.filter(s => s.riskLevel === 'low').length
+
+  return (
+    <>
+      {/* Mobile Toggle Button */}
+      <button
+        onClick={onToggle}
+        className="lg:hidden absolute top-4 right-4 z-10 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-lg"
+        aria-label="Toggle statistics panel"
+      >
+        {isOpen ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+      </button>
+
+      {/* Stats Panel */}
+      <div className={`
+        ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+        lg:relative absolute top-0 right-0 h-full
+        w-full sm:w-80 lg:w-80
+        bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700
+        shadow-lg lg:shadow-none
+        transition-transform duration-300 ease-in-out
+        z-20 lg:z-0
+        overflow-y-auto
+      `}>
+        <div className="p-4 space-y-6">
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+              Cell Site Statistics
+            </h2>
+            
+            {dataTimestamp && (
+              <div className="space-y-2 mb-4">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Data loaded: {dataTimestamp.toLocaleString()}
+                </p>
+                {onClearCache && (
+                  <button
+                    onClick={onClearCache}
+                    className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Clear cache & reload</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Total Sites */}
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Cell Sites</div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">{total}</div>
+          </div>
+
+          {/* Operational Status */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Operational Status
+            </h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <span className="text-sm text-gray-700 dark:text-gray-300">Operational</span>
+                <span className="text-lg font-bold text-green-600 dark:text-green-400">{operational}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                <span className="text-sm text-gray-700 dark:text-gray-300">Non-operational</span>
+                <span className="text-lg font-bold text-red-600 dark:text-red-400">{nonOperational}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Risk Levels */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Risk Distribution
+            </h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                <span className="text-sm text-gray-700 dark:text-gray-300">High Risk (&lt;5km)</span>
+                <span className="text-lg font-bold text-red-600 dark:text-red-400">{highRisk}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <span className="text-sm text-gray-700 dark:text-gray-300">Medium Risk (5-15km)</span>
+                <span className="text-lg font-bold text-yellow-600 dark:text-yellow-400">{mediumRisk}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <span className="text-sm text-gray-700 dark:text-gray-300">Low Risk (&gt;15km)</span>
+                <span className="text-lg font-bold text-green-600 dark:text-green-400">{lowRisk}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Map Legend
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span className="text-gray-700 dark:text-gray-300">Operational</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <span className="text-gray-700 dark:text-gray-300">Non-operational</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-red-500 rounded-full opacity-30"></div>
+                <span className="text-gray-700 dark:text-gray-300">High risk zone</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-yellow-500 rounded-full opacity-30"></div>
+                <span className="text-gray-700 dark:text-gray-300">Medium risk zone</span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 pt-2">
+                Markers automatically cluster at lower zoom levels. Click clusters to zoom in.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+
+export default StatsPanel
