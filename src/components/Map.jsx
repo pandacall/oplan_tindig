@@ -4,6 +4,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useEffect, useState } from 'react'
 import CellSitePopup from './CellSitePopup'
+import { Maximize2, Minimize2 } from 'lucide-react'
 
 // Fix for default marker icons in React-Leaflet
 delete L.Icon.Default.prototype._getIconUrl
@@ -56,7 +57,7 @@ function MapUpdater({ cellSites, selectedCity }) {
   return null
 }
 
-function Map({ cellSites, selectedCity }) {
+function Map({ cellSites, selectedCity, isFullscreen, onToggleFullscreen }) {
   const [faultLineData, setFaultLineData] = useState(null)
   // NCR (Metro Manila) center coordinates
   const center = [14.5995, 120.9842]
@@ -88,122 +89,137 @@ function Map({ cellSites, selectedCity }) {
   }
 
   return (
-    <MapContainer 
-      center={center} 
-      zoom={initialZoom} 
-      className="h-full w-full"
-      zoomControl={true}
-      minZoom={5}
-      maxZoom={18}
-      scrollWheelZoom={true}
-      touchZoom={true}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      
-      {/* Fault Line */}
-      {faultLineData && (
-        <>
-          <GeoJSON 
-            data={faultLineData} 
-            style={faultLineStyle}
-          />
-          
-          {/* Risk Zones - High (5km) and Medium (15km) */}
-          {getRiskZonePoints().map((coord, index) => (
-            <div key={`risk-zone-${index}`}>
-              <Circle
-                center={[coord[1], coord[0]]}
-                radius={5000}
-                pathOptions={{
-                  color: '#ef4444',
-                  fillColor: '#ef4444',
-                  fillOpacity: 0.05,
-                  weight: 1,
-                  opacity: 0.2
-                }}
-              />
-              <Circle
-                center={[coord[1], coord[0]]}
-                radius={15000}
-                pathOptions={{
-                  color: '#f59e0b',
-                  fillColor: '#f59e0b',
-                  fillOpacity: 0.03,
-                  weight: 1,
-                  opacity: 0.15
-                }}
-              />
-            </div>
-          ))}
-        </>
-      )}
-      
-      {/* Map Updater for city zoom */}
-      <MapUpdater cellSites={cellSites} selectedCity={selectedCity} />
-      
-      {/* Cell Site Markers with Clustering */}
-      <MarkerClusterGroup
-        chunkedLoading={true}
-        maxClusterRadius={60}
-        spiderfyOnMaxZoom={true}
-        showCoverageOnHover={false}
-        disableClusteringAtZoom={14}
-        animate={true}
-        animateAddingMarkers={false}
-        removeOutsideVisibleBounds={true}
-        iconCreateFunction={(cluster) => {
-          const markers = cluster.getAllChildMarkers()
-          const operationalCount = markers.filter(marker => {
-            return marker.options.cellSite && marker.options.cellSite.status === 'operational'
-          }).length
-          
-          const totalCount = markers.length
-          const operationalPercentage = (operationalCount / totalCount) * 100
-          const redDegrees = ((totalCount - operationalCount) / totalCount) * 360
-          const greenDegrees = 360 - redDegrees
-          
-          return L.divIcon({
-            html: `
-              <div style="position: relative; width: 44px; height: 44px;">
-                <svg width="44" height="44" style="position: absolute; top: 0; left: 0; transform: rotate(-90deg);">
-                  <circle cx="22" cy="22" r="19" fill="none" stroke="#ef4444" stroke-width="4" 
-                    stroke-dasharray="${redDegrees * 0.331} ${greenDegrees * 0.331}" 
-                    stroke-linecap="butt"/>
-                  <circle cx="22" cy="22" r="19" fill="none" stroke="#10b981" stroke-width="4" 
-                    stroke-dasharray="${greenDegrees * 0.331} ${redDegrees * 0.331}" 
-                    stroke-dashoffset="${-redDegrees * 0.331}"
-                    stroke-linecap="butt"/>
-                </svg>
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                  background-color: white; width: 34px; height: 34px; border-radius: 50%; 
-                  display: flex; align-items: center; justify-content: center; font-weight: bold; 
-                  font-size: 13px; color: #374151; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
-                  ${totalCount}
-                </div>
-              </div>
-            `,
-            className: 'custom-cluster-icon',
-            iconSize: L.point(44, 44, true)
-          })
-        }}
+    <div className="relative h-full w-full">
+      {/* Fullscreen Toggle Button - Mobile Only */}
+      <button
+        onClick={onToggleFullscreen}
+        className="lg:hidden absolute top-4 left-4 z-[1000] bg-white dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+        aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
       >
-        {cellSites.map((site, index) => (
-          <Marker
-            key={index}
-            position={[site.latitude, site.longitude]}
-            icon={site.status === 'operational' ? operationalIcon : nonOperationalIcon}
-            cellSite={site}
-          >
-            <Popup>
-              <CellSitePopup site={site} />
-            </Popup>
-          </Marker>
-        ))}
-      </MarkerClusterGroup>
-    </MapContainer>
+        {isFullscreen ? (
+          <Minimize2 className="w-5 h-5 text-gray-900 dark:text-white" />
+        ) : (
+          <Maximize2 className="w-5 h-5 text-gray-900 dark:text-white" />
+        )}
+      </button>
+
+      <MapContainer 
+        center={center} 
+        zoom={initialZoom} 
+        className="h-full w-full"
+        zoomControl={true}
+        minZoom={5}
+        maxZoom={18}
+        scrollWheelZoom={true}
+        touchZoom={true}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        
+        {/* Fault Line */}
+        {faultLineData && (
+          <>
+            <GeoJSON 
+              data={faultLineData} 
+              style={faultLineStyle}
+            />
+            
+            {/* Risk Zones - High (5km) and Medium (15km) */}
+            {getRiskZonePoints().map((coord, index) => (
+              <div key={`risk-zone-${index}`}>
+                <Circle
+                  center={[coord[1], coord[0]]}
+                  radius={5000}
+                  pathOptions={{
+                    color: '#ef4444',
+                    fillColor: '#ef4444',
+                    fillOpacity: 0.05,
+                    weight: 1,
+                    opacity: 0.2
+                  }}
+                />
+                <Circle
+                  center={[coord[1], coord[0]]}
+                  radius={15000}
+                  pathOptions={{
+                    color: '#f59e0b',
+                    fillColor: '#f59e0b',
+                    fillOpacity: 0.03,
+                    weight: 1,
+                    opacity: 0.15
+                  }}
+                />
+              </div>
+            ))}
+          </>
+        )}
+        
+        {/* Map Updater for city zoom */}
+        <MapUpdater cellSites={cellSites} selectedCity={selectedCity} />
+        
+        {/* Cell Site Markers with Clustering */}
+        <MarkerClusterGroup
+          chunkedLoading={true}
+          maxClusterRadius={60}
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+          disableClusteringAtZoom={14}
+          animate={true}
+          animateAddingMarkers={false}
+          removeOutsideVisibleBounds={true}
+          iconCreateFunction={(cluster) => {
+            const markers = cluster.getAllChildMarkers()
+            const operationalCount = markers.filter(marker => {
+              return marker.options.cellSite && marker.options.cellSite.status === 'operational'
+            }).length
+            
+            const totalCount = markers.length
+            const operationalPercentage = (operationalCount / totalCount) * 100
+            const redDegrees = ((totalCount - operationalCount) / totalCount) * 360
+            const greenDegrees = 360 - redDegrees
+            
+            return L.divIcon({
+              html: `
+                <div style="position: relative; width: 44px; height: 44px;">
+                  <svg width="44" height="44" style="position: absolute; top: 0; left: 0; transform: rotate(-90deg);">
+                    <circle cx="22" cy="22" r="19" fill="none" stroke="#ef4444" stroke-width="4" 
+                      stroke-dasharray="${redDegrees * 0.331} ${greenDegrees * 0.331}" 
+                      stroke-linecap="butt"/>
+                    <circle cx="22" cy="22" r="19" fill="none" stroke="#10b981" stroke-width="4" 
+                      stroke-dasharray="${greenDegrees * 0.331} ${redDegrees * 0.331}" 
+                      stroke-dashoffset="${-redDegrees * 0.331}"
+                      stroke-linecap="butt"/>
+                  </svg>
+                  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                    background-color: white; width: 34px; height: 34px; border-radius: 50%; 
+                    display: flex; align-items: center; justify-content: center; font-weight: bold; 
+                    font-size: 13px; color: #374151; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+                    ${totalCount}
+                  </div>
+                </div>
+              `,
+              className: 'custom-cluster-icon',
+              iconSize: L.point(44, 44, true)
+            })
+          }}
+        >
+          {cellSites.map((site, index) => (
+            <Marker
+              key={index}
+              position={[site.latitude, site.longitude]}
+              icon={site.status === 'operational' ? operationalIcon : nonOperationalIcon}
+              cellSite={site}
+            >
+              <Popup>
+                <CellSitePopup site={site} />
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
+      </MapContainer>
+    </div>
   )
 }
 

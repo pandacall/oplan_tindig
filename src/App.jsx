@@ -23,6 +23,7 @@ function App() {
   const [statsOpen, setStatsOpen] = useState(false)
   const [dataTimestamp, setDataTimestamp] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [mapFullscreen, setMapFullscreen] = useState(false)
 
   // Load sample data on mount
   useEffect(() => {
@@ -149,13 +150,18 @@ function App() {
       />
 
       {/* Desktop: side-by-side layout */}
-      {/* Mobile: stacked layout with scrollable stats */}
+      {/* Mobile: stacked layout with fullscreen toggle */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <div className="flex-1 lg:flex-1 h-1/2 lg:h-full relative">
-          <Map cellSites={filteredSites} selectedCity={filters.city} />
+        <div className={`${mapFullscreen ? 'h-full' : 'h-1/2'} lg:h-full lg:flex-1 relative`}>
+          <Map 
+            cellSites={filteredSites} 
+            selectedCity={filters.city}
+            isFullscreen={mapFullscreen}
+            onToggleFullscreen={() => setMapFullscreen(!mapFullscreen)}
+          />
         </div>
         
-        <div className="flex-1 lg:flex-initial h-1/2 lg:h-full overflow-y-auto">
+        <div className={`${mapFullscreen ? 'hidden' : 'flex-1'} lg:flex lg:flex-initial lg:h-full overflow-y-auto`}>
           <StatsPanel 
             cellSites={filteredSites}
             isOpen={statsOpen}
