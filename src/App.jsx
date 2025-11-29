@@ -148,18 +148,22 @@ function App() {
         setFilteredSites={setFilteredSites}
       />
 
-      <div className="flex-1 flex overflow-hidden relative">
-        <div className="flex-1 relative">
+      {/* Desktop: side-by-side layout */}
+      {/* Mobile: stacked layout with scrollable stats */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        <div className="flex-1 lg:flex-1 h-1/2 lg:h-full relative">
           <Map cellSites={filteredSites} selectedCity={filters.city} />
         </div>
         
-        <StatsPanel 
-          cellSites={filteredSites}
-          isOpen={statsOpen}
-          onToggle={() => setStatsOpen(!statsOpen)}
-          dataTimestamp={dataTimestamp}
-          onClearCache={clearCache}
-        />
+        <div className="flex-1 lg:flex-initial h-1/2 lg:h-full overflow-y-auto">
+          <StatsPanel 
+            cellSites={filteredSites}
+            isOpen={statsOpen}
+            onToggle={() => setStatsOpen(!statsOpen)}
+            dataTimestamp={dataTimestamp}
+            onClearCache={clearCache}
+          />
+        </div>
       </div>
 
       <CSVUploader onDataLoad={handleCSVUpload} />
