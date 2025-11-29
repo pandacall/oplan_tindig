@@ -1,4 +1,4 @@
- import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import TopNav from './components/TopNav'
 import Map from './components/Map'
 import FilterControls from './components/FilterControls'
@@ -7,8 +7,9 @@ import CSVUploader from './components/CSVUploader'
 import { parseCellSites } from './utils/csvParser'
 import { calculateRiskLevels } from './utils/geoCalculations'
 
-// Sample data - will be replaced by CSV upload
-const sampleDataUrl = '/sample-cellsites.csv'
+// Combined data from Globe, DITO, and Converge
+const sampleDataUrl = '/combined-cellsites.csv'
+const CACHE_VERSION = 'v3' // Changed to v3 to force reload
 
 function App() {
   const [theme, setTheme] = useState('light')
@@ -34,11 +35,16 @@ function App() {
     try {
       setLoading(true)
       
-      // Check localStorage first
-      const cachedData = localStorage.getItem('cellSitesData')
-      if (cachedData) {
+      // Check localStorage first with version
+      const cacheKey = `cellSitesData_${CACHE_VERSION}`
+      const cachedData = localStorage.getItem(cacheKey)
+      
+      // FOR DEBUGGING - Always load from CSV during development
+      const forceReload = true // Set to false in production
+      
+      if (cachedData && !forceReload) {
         const parsed = JSON.parse(cachedData)
-        console.log('Loaded', parsed.sites.length, 'cell sites from cache')
+        console.log('Loaded', parsed.sites.length, 'cell sites from cache (v' + CACHE_VERSION + ')')
         setCellSites(parsed.sites)
         setFilteredSites(parsed.sites)
         setDataTimestamp(new Date(parsed.timestamp))
@@ -46,10 +52,26 @@ function App() {
         return
       }
       
+      // Clear old cache versions
+      console.log('Clearing old cache versions...')
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('cellSitesData_')) {
+          console.log('Removing:', key)
+          localStorage.removeItem(key)
+        }
+      })
+      
       // Load from CSV
-      const response = await fetch(sampleDataUrl)
+      console.log('Loading from CSV:', sampleDataUrl)
+      const response = await fetch(sampleDataUrl + '?v=' + Date.now()) // Cache bust
+      if (!response.ok) {
+        throw new Error(`Failed to fetch CSV: ${response.status}`)
+      }
       const csvText = await response.text()
+      console.log('CSV loaded, length:', csvText.length)
+      
       let sites = await parseCellSites(csvText)
+      console.log('Parsed sites:', sites.length)
       
       // Load fault line and calculate risk levels
       try {
@@ -61,20 +83,27 @@ function App() {
         console.warn('Could not calculate risk levels:', err)
       }
       
-      console.log('Loaded', sites.length, 'cell sites')
+      console.log('Final loaded sites:', sites.length)
+      console.log('Provider breakdown:', {
+        Globe: sites.filter(s => s.provider === 'Globe').length,
+        DITO: sites.filter(s => s.provider === 'DITO').length,
+        Converge: sites.filter(s => s.provider === 'Converge').length
+      })
+      
       setCellSites(sites)
       setFilteredSites(sites)
       const now = new Date()
       setDataTimestamp(now)
       
-      // Persist to localStorage
-      localStorage.setItem('cellSitesData', JSON.stringify({
+      // Persist to localStorage with version
+      localStorage.setItem(cacheKey, JSON.stringify({
         sites,
         timestamp: now.toISOString()
       }))
+      console.log('Cached data with version:', CACHE_VERSION)
     } catch (error) {
       console.error('Error loading sample data:', error)
-      alert('Failed to load sample data. Please check console for details.')
+      alert('Failed to load sample data: ' + error.message)
     } finally {
       setLoading(false)
     }

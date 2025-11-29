@@ -9,7 +9,7 @@ function CellSitePopup({ site }) {
   }
 
   const getStatusColor = (status) => {
-    return status === 'operational' 
+    return status === 'online' 
       ? 'text-green-600 dark:text-green-400' 
       : 'text-red-600 dark:text-red-400'
   }
@@ -30,7 +30,7 @@ function CellSitePopup({ site }) {
       <div>
         <span className="font-semibold">Status:</span> 
         <span className={`ml-1 font-medium ${getStatusColor(site.status)}`}>
-          {site.status.charAt(0).toUpperCase() + site.status.slice(1)}
+          {site.status === 'online' ? 'Online' : 'Offline'}
         </span>
       </div>
       <div>

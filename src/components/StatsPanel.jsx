@@ -2,8 +2,8 @@
 
 function StatsPanel({ cellSites, isOpen, onToggle, dataTimestamp, onClearCache }) {
   const total = cellSites.length
-  const operational = cellSites.filter(s => s.status === 'operational').length
-  const nonOperational = cellSites.filter(s => s.status === 'non-operational').length
+  const online = cellSites.filter(s => s.status === 'online').length
+  const offline = cellSites.filter(s => s.status === 'offline').length
   const highRisk = cellSites.filter(s => s.riskLevel === 'high').length
   const mediumRisk = cellSites.filter(s => s.riskLevel === 'medium').length
   const lowRisk = cellSites.filter(s => s.riskLevel === 'low').length
@@ -43,16 +43,16 @@ function StatsPanel({ cellSites, isOpen, onToggle, dataTimestamp, onClearCache }
 
           <div>
             <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
-              Operational Status
+              Status
             </h3>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between p-2 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg border border-green-200 dark:border-green-800/50 backdrop-blur-sm">
-                <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">Operational</span>
-                <span className="text-base font-black text-green-600 dark:text-green-400">{operational}</span>
+                <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">Online</span>
+                <span className="text-base font-black text-green-600 dark:text-green-400">{online}</span>
               </div>
               <div className="flex items-center justify-between p-2 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 rounded-lg border border-red-200 dark:border-red-800/50 backdrop-blur-sm">
-                <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">Non-operational</span>
-                <span className="text-base font-black text-red-600 dark:text-red-400">{nonOperational}</span>
+                <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">Offline</span>
+                <span className="text-base font-black text-red-600 dark:text-red-400">{offline}</span>
               </div>
             </div>
           </div>
@@ -84,11 +84,11 @@ function StatsPanel({ cellSites, isOpen, onToggle, dataTimestamp, onClearCache }
             <div className="space-y-1 text-xs">
               <div className="flex items-center space-x-2">
                 <div className="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
-                <span className="text-gray-700 dark:text-gray-300">Operational</span>
+                <span className="text-gray-700 dark:text-gray-300">Online</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
-                <span className="text-gray-700 dark:text-gray-300">Non-operational</span>
+                <span className="text-gray-700 dark:text-gray-300">Offline</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full opacity-30"></div>
@@ -121,13 +121,13 @@ function StatsPanel({ cellSites, isOpen, onToggle, dataTimestamp, onClearCache }
             </div>
             
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-2 rounded-lg border border-green-200 dark:border-green-800/50">
-              <div className="text-[10px] text-green-700 dark:text-green-300 font-medium">Active</div>
-              <div className="text-xl font-black text-green-600 dark:text-green-400">{operational}</div>
+              <div className="text-[10px] text-green-700 dark:text-green-300 font-medium">Online</div>
+              <div className="text-xl font-black text-green-600 dark:text-green-400">{online}</div>
             </div>
             
             <div className="bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 p-2 rounded-lg border border-red-200 dark:border-red-800/50">
-              <div className="text-[10px] text-red-700 dark:text-red-300 font-medium">Down</div>
-              <div className="text-xl font-black text-red-600 dark:text-red-400">{nonOperational}</div>
+              <div className="text-[10px] text-red-700 dark:text-red-300 font-medium">Offline</div>
+              <div className="text-xl font-black text-red-600 dark:text-red-400">{offline}</div>
             </div>
           </div>
 

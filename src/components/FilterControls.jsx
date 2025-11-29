@@ -4,8 +4,8 @@ import { applyFilters } from '../utils/filterLogic'
 function FilterControls({ cellSites, filters, setFilters, setFilteredSites }) {
   // Get unique values for dropdowns
   const cities = ['all', ...new Set(cellSites.map(site => site.city).filter(Boolean).sort())]
-  const providers = ['all', 'Globe', 'Smart', 'DITO']
-  const statuses = ['all', 'operational', 'non-operational']
+  const providers = ['all', 'Globe', 'DITO', 'Converge']
+  const statuses = ['all', 'online', 'offline']
   const riskLevels = ['all', 'high', 'medium', 'low']
 
   // Apply filters whenever they change

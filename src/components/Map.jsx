@@ -24,8 +24,8 @@ const createMarkerIcon = (borderColor) => {
   })
 }
 
-const operationalIcon = createMarkerIcon('#10b981')
-const nonOperationalIcon = createMarkerIcon('#ef4444')
+const onlineIcon = createMarkerIcon('#10b981')
+const offlineIcon = createMarkerIcon('#ef4444')
 
 // Component to handle map zoom when city changes
 function MapUpdater({ cellSites, selectedCity }) {
@@ -171,13 +171,13 @@ function Map({ cellSites, selectedCity, isFullscreen, onToggleFullscreen }) {
           removeOutsideVisibleBounds={true}
           iconCreateFunction={(cluster) => {
             const markers = cluster.getAllChildMarkers()
-            const operationalCount = markers.filter(marker => {
-              return marker.options.cellSite && marker.options.cellSite.status === 'operational'
+            const onlineCount = markers.filter(marker => {
+              return marker.options.cellSite && marker.options.cellSite.status === 'online'
             }).length
             
             const totalCount = markers.length
-            const operationalPercentage = (operationalCount / totalCount) * 100
-            const redDegrees = ((totalCount - operationalCount) / totalCount) * 360
+            const onlinePercentage = (onlineCount / totalCount) * 100
+            const redDegrees = ((totalCount - onlineCount) / totalCount) * 360
             const greenDegrees = 360 - redDegrees
             
             return L.divIcon({
@@ -209,7 +209,7 @@ function Map({ cellSites, selectedCity, isFullscreen, onToggleFullscreen }) {
             <Marker
               key={index}
               position={[site.latitude, site.longitude]}
-              icon={site.status === 'operational' ? operationalIcon : nonOperationalIcon}
+              icon={site.status === 'online' ? onlineIcon : offlineIcon}
               cellSite={site}
             >
               <Popup>
