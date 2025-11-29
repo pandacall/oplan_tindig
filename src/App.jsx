@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+ import { useState, useEffect } from 'react'
 import TopNav from './components/TopNav'
 import Map from './components/Map'
 import FilterControls from './components/FilterControls'
@@ -153,10 +153,9 @@ function App() {
         />
       )}
 
-      {/* Desktop: side-by-side layout */}
-      {/* Mobile: stacked layout with fullscreen toggle */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <div className={`${mapFullscreen ? 'h-full' : 'h-1/2'} lg:h-full lg:flex-1 relative`}>
+      {/* Map in fullscreen mode - fixed positioning */}
+      {mapFullscreen && (
+        <div className="fixed inset-0 z-40 lg:hidden">
           <Map 
             cellSites={filteredSites} 
             selectedCity={filters.city}
@@ -164,17 +163,56 @@ function App() {
             onToggleFullscreen={() => setMapFullscreen(!mapFullscreen)}
           />
         </div>
-        
-        <div className={`${mapFullscreen ? 'hidden' : 'flex-1'} lg:flex lg:flex-initial lg:h-full overflow-y-auto`}>
-          <StatsPanel 
-            cellSites={filteredSites}
-            isOpen={statsOpen}
-            onToggle={() => setStatsOpen(!statsOpen)}
-            dataTimestamp={dataTimestamp}
-            onClearCache={clearCache}
-          />
+      )}
+
+      {/* Desktop: side-by-side layout */}
+      {/* Mobile: stacked layout */}
+      {!mapFullscreen && (
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+          <div className="h-1/2 lg:h-full lg:flex-1 relative">
+            <Map 
+              cellSites={filteredSites} 
+              selectedCity={filters.city}
+              isFullscreen={mapFullscreen}
+              onToggleFullscreen={() => setMapFullscreen(!mapFullscreen)}
+            />
+          </div>
+          
+          <div className="flex-1 lg:flex-initial lg:h-full overflow-y-auto">
+            <StatsPanel 
+              cellSites={filteredSites}
+              isOpen={statsOpen}
+              onToggle={() => setStatsOpen(!statsOpen)}
+              dataTimestamp={dataTimestamp}
+              onClearCache={clearCache}
+            />
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Desktop fullscreen mode */}
+      {mapFullscreen && (
+        <div className="hidden lg:flex flex-1 flex-col lg:flex-row overflow-hidden">
+          <div className="h-full lg:flex-1 relative">
+            <Map 
+              cellSites={filteredSites} 
+              selectedCity={filters.city}
+              isFullscreen={mapFullscreen}
+              onToggleFullscreen={() => setMapFullscreen(!mapFullscreen)}
+            />
+          </div>
+          
+          <div className="lg:flex-initial lg:h-full lg:w-80 overflow-y-auto">
+            <StatsPanel 
+              cellSites={filteredSites}
+              isOpen={statsOpen}
+              onToggle={() => setStatsOpen(!statsOpen)}
+              dataTimestamp={dataTimestamp}
+              onClearCache={clearCache}
+            />
+          </div>
+        </div>
+      )}
 
       <CSVUploader onDataLoad={handleCSVUpload} />
     </div>
