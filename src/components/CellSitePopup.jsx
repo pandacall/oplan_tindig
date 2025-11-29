@@ -16,9 +16,9 @@ function CellSitePopup({ site }) {
 
   return (
     <div className="text-sm space-y-1 min-w-[200px]">
-      {site.siteId && (
+      {site.siteName && (
         <div>
-          <span className="font-semibold">Site ID:</span> {site.siteId}
+          <span className="font-semibold">Site Name:</span> {site.siteName}
         </div>
       )}
       <div>

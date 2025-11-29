@@ -4,32 +4,22 @@ export const parseCellSites = async (csvText) => {
   return new Promise((resolve, reject) => {
     Papa.parse(csvText, {
       header: true,
-      dynamicTyping: true,
+      dynamicTyping: false,
       skipEmptyLines: true,
-      transformHeader: (header) => {
-        // Normalize column names
-        const headerMap = {
-          'Site_Name': 'siteId',
-          'Telco': 'provider',
-          'Status': 'status',
-          'Longitude': 'longitude',
-          'Latitude': 'latitude'
-        }
-        return headerMap[header] || header.toLowerCase()
-      },
       complete: (results) => {
         if (results.errors.length > 0) {
           console.warn('CSV parsing warnings:', results.errors)
         }
         
         console.log('Raw parsed data:', results.data.length, 'rows')
-        console.log('First row sample:', results.data[0])
+        console.log('First 3 rows:', results.data.slice(0, 3))
         
         const cellSites = results.data
           .filter(row => {
-            // Only check if coordinates exist and are valid numbers
-            const hasLat = row.latitude !== null && row.latitude !== undefined && !isNaN(row.latitude)
-            const hasLon = row.longitude !== null && row.longitude !== undefined && !isNaN(row.longitude)
+            const lat = parseFloat(row.Latitude)
+            const lon = parseFloat(row.Longitude)
+            const hasLat = !isNaN(lat)
+            const hasLon = !isNaN(lon)
             
             if (!hasLat || !hasLon) {
               console.warn('Invalid coordinates:', row)
@@ -38,20 +28,32 @@ export const parseCellSites = async (csvText) => {
             
             return true
           })
-          .map(row => ({
-            siteId: String(row.siteId || 'UNKNOWN'),
-            provider: String(row.provider || 'Unknown'),
-            city: extractCity(parseFloat(row.latitude), parseFloat(row.longitude)),
-            latitude: parseFloat(row.latitude),
-            longitude: parseFloat(row.longitude),
-            status: normalizeStatus(row.status),
-            address: row.address || `${row.latitude}, ${row.longitude}`,
-            riskLevel: 'unknown'
-          }))
+          .map((row, index) => {
+            const siteName = row.Site_Name ? String(row.Site_Name).trim() : 'UNKNOWN'
+            
+            if (index < 3) {
+              console.log(`✅ Mapping row ${index}:`, {
+                'Site_Name': row.Site_Name,
+                finalSiteName: siteName,
+                provider: row.Telco
+              })
+            }
+            
+            return {
+              siteName: siteName,
+              provider: String(row.Telco || 'Unknown').trim(),
+              city: extractCity(parseFloat(row.Latitude), parseFloat(row.Longitude)),
+              latitude: parseFloat(row.Latitude),
+              longitude: parseFloat(row.Longitude),
+              status: normalizeStatus(row.Status),
+              address: row.address || `${row.Latitude}, ${row.Longitude}`,
+              riskLevel: 'unknown'
+            }
+          })
         
-        console.log(`Parsed ${cellSites.length} valid cell sites from CSV`)
+        console.log(`✅ Parsed ${cellSites.length} valid cell sites from CSV`)
         if (cellSites.length > 0) {
-          console.log('Sample site:', cellSites[0])
+          console.log('First 3 sites:', cellSites.slice(0, 3))
           console.log('Provider breakdown:', {
             Globe: cellSites.filter(s => s.provider === 'Globe').length,
             DITO: cellSites.filter(s => s.provider === 'DITO').length,
