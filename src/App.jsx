@@ -127,11 +127,13 @@ function App() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      <TopNav 
-        theme={theme}
-        onThemeToggle={toggleTheme}
-        highRiskCount={filteredSites.filter(s => s.riskLevel === 'high').length}
-      />
+      {!mapFullscreen && (
+        <TopNav 
+          theme={theme}
+          onThemeToggle={toggleTheme}
+          highRiskCount={filteredSites.filter(s => s.riskLevel === 'high').length}
+        />
+      )}
       
       {loading && (
         <div className="absolute inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
@@ -142,12 +144,14 @@ function App() {
         </div>
       )}
       
-      <FilterControls 
-        cellSites={cellSites}
-        filters={filters}
-        setFilters={setFilters}
-        setFilteredSites={setFilteredSites}
-      />
+      {!mapFullscreen && (
+        <FilterControls 
+          cellSites={cellSites}
+          filters={filters}
+          setFilters={setFilters}
+          setFilteredSites={setFilteredSites}
+        />
+      )}
 
       {/* Desktop: side-by-side layout */}
       {/* Mobile: stacked layout with fullscreen toggle */}

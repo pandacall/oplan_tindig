@@ -90,10 +90,10 @@ function Map({ cellSites, selectedCity, isFullscreen, onToggleFullscreen }) {
 
   return (
     <div className="relative h-full w-full">
-      {/* Fullscreen Toggle Button - Mobile Only */}
+      {/* Fullscreen Toggle Button - Mobile Only, Top Right */}
       <button
         onClick={onToggleFullscreen}
-        className="lg:hidden absolute top-4 left-4 z-[1000] bg-white dark:bg-gray-800 p-2 rounded-lg shadow-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+        className="lg:hidden absolute top-4 right-4 z-[1000] bg-white dark:bg-gray-800 p-2.5 rounded-lg shadow-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
         aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
       >
         {isFullscreen ? (

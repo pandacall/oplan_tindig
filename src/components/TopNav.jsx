@@ -36,9 +36,6 @@ function TopNav({ theme, onThemeToggle, highRiskCount }) {
           <h1 className="text-sm font-black bg-gradient-to-r from-gray-800 via-orange-600 to-orange-800 bg-clip-text text-transparent tracking-tight leading-tight">
             PROJECT TINDIG
           </h1>
-          <p className="text-[10px] text-gray-600 dark:text-gray-400 font-medium tracking-wide">
-            Telco Infrastructure & Disaster Intelligence Grid
-          </p>
         </div>
       </div>
 
