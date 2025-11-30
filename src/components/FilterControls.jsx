@@ -3,10 +3,29 @@ import { applyFilters } from '../utils/filterLogic'
 
 function FilterControls({ cellSites, filters, setFilters, setFilteredSites }) {
   // Get unique values for dropdowns
-  const cities = ['all', ...new Set(cellSites.map(site => site.city).filter(Boolean).sort())]
+  const provinces = ['all', ...new Set(cellSites.map(site => site.province).filter(Boolean).sort())]
+  
+  // Filter cities based on selected province
+  const availableCities = filters.province === 'all'
+    ? cellSites
+    : cellSites.filter(site => site.province === filters.province)
+  const cities = ['all', ...new Set(availableCities.map(site => site.city).filter(Boolean).sort())]
+  
   const providers = ['all', 'Globe', 'DITO', 'Converge']
   const statuses = ['all', 'online', 'offline']
   const riskLevels = ['all', 'high', 'medium', 'low']
+
+  // Reset city filter when province changes
+  useEffect(() => {
+    if (filters.province !== 'all' && filters.city !== 'all') {
+      const cityExistsInProvince = cellSites.some(
+        site => site.province === filters.province && site.city === filters.city
+      )
+      if (!cityExistsInProvince) {
+        setFilters(prev => ({ ...prev, city: 'all' }))
+      }
+    }
+  }, [filters.province, filters.city, cellSites, setFilters])
 
   // Apply filters whenever they change
   useEffect(() => {
@@ -15,10 +34,19 @@ function FilterControls({ cellSites, filters, setFilters, setFilteredSites }) {
   }, [cellSites, filters, setFilteredSites])
 
   const handleFilterChange = (filterType, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterType]: value
-    }))
+    if (filterType === 'province') {
+      // Reset city when province changes
+      setFilters(prev => ({
+        ...prev,
+        province: value,
+        city: 'all'
+      }))
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [filterType]: value
+      }))
+    }
   }
 
   const selectClass = "px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
@@ -26,6 +54,19 @@ function FilterControls({ cellSites, filters, setFilters, setFilteredSites }) {
   return (
     <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
       <div className="flex flex-wrap gap-3 items-center">
+        <select
+          value={filters.province}
+          onChange={(e) => handleFilterChange('province', e.target.value)}
+          className={selectClass}
+          aria-label="Filter by province"
+        >
+          {provinces.map(province => (
+            <option key={province} value={province}>
+              {province === 'all' ? 'All Provinces' : province}
+            </option>
+          ))}
+        </select>
+
         <select
           value={filters.city}
           onChange={(e) => handleFilterChange('city', e.target.value)}
@@ -88,9 +129,9 @@ function FilterControls({ cellSites, filters, setFilters, setFilteredSites }) {
           <span className="text-sm text-gray-900 dark:text-gray-100">Show Staging Areas</span>
         </label>
 
-        {(filters.city !== 'all' || filters.status !== 'all' || filters.provider !== 'all' || filters.riskLevel !== 'all') && (
+        {(filters.province !== 'all' || filters.city !== 'all' || filters.status !== 'all' || filters.provider !== 'all' || filters.riskLevel !== 'all') && (
           <button
-            onClick={() => setFilters({ city: 'all', status: 'all', provider: 'all', riskLevel: 'all', showStagingAreas: filters.showStagingAreas })}
+            onClick={() => setFilters({ province: 'all', city: 'all', status: 'all', provider: 'all', riskLevel: 'all', showStagingAreas: filters.showStagingAreas })}
             className="px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:underline"
           >
             Clear Filters

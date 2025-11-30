@@ -7,6 +7,11 @@
  */
 export function applyFilters(cellSites, filters) {
   return cellSites.filter(site => {
+    // Province filter
+    if (filters.province && filters.province !== 'all' && site.province !== filters.province) {
+      return false
+    }
+
     // City filter
     if (filters.city && filters.city !== 'all' && site.city !== filters.city) {
       return false

@@ -10,7 +10,7 @@ import { calculateRiskLevels } from './utils/geoCalculations'
 // Combined data from Globe, DITO, and Converge
 const sampleDataUrl = '/combined-cellsites.csv'
 const stagingAreasUrl = '/Staging_Areas.csv'
-const CACHE_VERSION = 'v4' // Changed to v4 to include staging areas
+const CACHE_VERSION = 'v5' // Changed to v5 to include province data
 
 function App() {
   const [theme, setTheme] = useState('light')
@@ -18,6 +18,7 @@ function App() {
   const [stagingAreas, setStagingAreas] = useState([])
   const [filteredSites, setFilteredSites] = useState([])
   const [filters, setFilters] = useState({
+    province: 'all',
     city: 'all',
     status: 'all',
     provider: 'all',

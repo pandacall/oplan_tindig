@@ -1,6 +1,46 @@
 import Papa from 'papaparse'
+import * as turf from '@turf/turf'
+
+// Load GeoJSON boundaries - these will be fetched once and cached
+let boundariesLoaded = false
+let ncrBoundaries = null
+let regionIIIBoundaries = null
+let regionIVABoundaries = null
+
+// Load all three GeoJSON boundary files
+const loadBoundaries = async () => {
+  if (boundariesLoaded) return
+  
+  try {
+    console.log('Loading official Philippine administrative boundaries...')
+    
+    // Load NCR boundaries
+    const ncrResponse = await fetch('/ncr_dists_citi_muni.geojson')
+    ncrBoundaries = await ncrResponse.json()
+    console.log(`✅ Loaded NCR: ${ncrBoundaries.features.length} municipalities`)
+    
+    // Load Region III boundaries
+    const region3Response = await fetch('/iii_prov_citi_muni.geojson')
+    regionIIIBoundaries = await region3Response.json()
+    console.log(`✅ Loaded Region III: ${regionIIIBoundaries.features.length} municipalities`)
+    
+    // Load Region IVA boundaries
+    const region4aResponse = await fetch('/iva_prov_citi_muni.geojson')
+    regionIVABoundaries = await region4aResponse.json()
+    console.log(`✅ Loaded Region IVA: ${regionIVABoundaries.features.length} municipalities`)
+    
+    boundariesLoaded = true
+    console.log('✅ All administrative boundaries loaded successfully')
+  } catch (error) {
+    console.error('❌ Error loading boundaries:', error)
+    throw error
+  }
+}
 
 export const parseCellSites = async (csvText) => {
+  // Ensure boundaries are loaded before parsing
+  await loadBoundaries()
+  
   return new Promise((resolve, reject) => {
     Papa.parse(csvText, {
       header: true,
@@ -39,10 +79,13 @@ export const parseCellSites = async (csvText) => {
               })
             }
             
+            const location = extractLocation(parseFloat(row.Latitude), parseFloat(row.Longitude))
+            
             return {
               siteName: siteName,
               provider: String(row.Telco || 'Unknown').trim(),
-              city: extractCity(parseFloat(row.Latitude), parseFloat(row.Longitude)),
+              city: location.city,
+              province: location.province,
               latitude: parseFloat(row.Latitude),
               longitude: parseFloat(row.Longitude),
               status: normalizeStatus(row.Status),
@@ -83,25 +126,90 @@ const normalizeStatus = (status) => {
   return 'online'
 }
 
-// Extract city based on coordinates (NCR areas)
-const extractCity = (lat, lon) => {
-  // Rough boundaries for NCR cities
-  if (lat >= 14.65 && lat <= 14.76 && lon >= 121.0 && lon <= 121.13) return 'Quezon City'
-  if (lat >= 14.52 && lat <= 14.58 && lon >= 121.0 && lon <= 121.07) return 'Makati'
-  if (lat >= 14.58 && lat <= 14.62 && lon >= 120.97 && lon <= 121.02) return 'Manila'
-  if (lat >= 14.50 && lat <= 14.57 && lon >= 121.03 && lon <= 121.10) return 'Taguig'
-  if (lat >= 14.48 && lat <= 14.55 && lon >= 121.00 && lon <= 121.08) return 'Pasig'
-  if (lat >= 14.52 && lat <= 14.60 && lon >= 120.99 && lon <= 121.05) return 'Mandaluyong'
-  if (lat >= 14.54 && lat <= 14.59 && lon >= 120.97 && lon <= 121.00) return 'San Juan'
-  if (lat >= 14.40 && lat <= 14.48 && lon >= 121.00 && lon <= 121.11) return 'Muntinlupa'
-  if (lat >= 14.48 && lat <= 14.54 && lon >= 121.03 && lon <= 121.12) return 'Parañaque'
-  if (lat >= 14.43 && lat <= 14.52 && lon >= 120.98 && lon <= 121.05) return 'Las Piñas'
+// Province code mapping (adm2_psgc to province name)
+const PROVINCE_MAP = {
+  // NCR (Metro Manila) - all use same region code
+  1300000000: 'Metro Manila',
   
-  return 'Metro Manila'
+  // Region III (Central Luzon)
+  300800000: 'Bataan',
+  301400000: 'Bulacan',
+  303400000: 'Nueva Ecija',
+  305400000: 'Pampanga',
+  306900000: 'Tarlac',
+  307100000: 'Zambales',
+  307700000: 'Aurora',
+  
+  // Region IVA (CALABARZON)
+  401000000: 'Batangas',
+  402100000: 'Cavite',
+  403400000: 'Laguna',
+  404500000: 'Quezon',
+  405800000: 'Rizal'
+}
+
+// Extract city and province using point-in-polygon with official GeoJSON boundaries
+const extractLocation = (lat, lon) => {
+  // Create a Turf.js point from the coordinates
+  const point = turf.point([lon, lat]) // GeoJSON uses [longitude, latitude] order
+  
+  // Check NCR boundaries first
+  if (ncrBoundaries) {
+    for (const feature of ncrBoundaries.features) {
+      try {
+        if (turf.booleanPointInPolygon(point, feature.geometry)) {
+          const cityName = feature.properties.adm3_en
+          const adm1Code = feature.properties.adm1_psgc
+          const province = PROVINCE_MAP[adm1Code] || 'Metro Manila'
+          return { city: cityName, province }
+        }
+      } catch (error) {
+        console.warn('Error checking NCR boundary:', error)
+      }
+    }
+  }
+  
+  // Check Region III boundaries
+  if (regionIIIBoundaries) {
+    for (const feature of regionIIIBoundaries.features) {
+      try {
+        if (turf.booleanPointInPolygon(point, feature.geometry)) {
+          const cityName = feature.properties.adm3_en
+          const adm2Code = feature.properties.adm2_psgc
+          const province = PROVINCE_MAP[adm2Code] || 'Unknown Province'
+          return { city: cityName, province }
+        }
+      } catch (error) {
+        console.warn('Error checking Region III boundary:', error)
+      }
+    }
+  }
+  
+  // Check Region IVA boundaries
+  if (regionIVABoundaries) {
+    for (const feature of regionIVABoundaries.features) {
+      try {
+        if (turf.booleanPointInPolygon(point, feature.geometry)) {
+          const cityName = feature.properties.adm3_en
+          const adm2Code = feature.properties.adm2_psgc
+          const province = PROVINCE_MAP[adm2Code] || 'Unknown Province'
+          return { city: cityName, province }
+        }
+      } catch (error) {
+        console.warn('Error checking Region IVA boundary:', error)
+      }
+    }
+  }
+  
+  // If no match found in any region
+  return { city: 'Unknown', province: 'Unknown' }
 }
 
 // Parse staging areas from CSV
 export const parseStagingAreas = async (csvText) => {
+  // Ensure boundaries are loaded before parsing
+  await loadBoundaries()
+  
   return new Promise((resolve, reject) => {
     Papa.parse(csvText, {
       header: true,
@@ -131,6 +239,7 @@ export const parseStagingAreas = async (csvText) => {
           .map((row, index) => {
             const name = row.LGU_Site_Name ? String(row.LGU_Site_Name).trim() : 'Unknown Staging Area'
             const func = row.Function ? String(row.Function).trim() : 'Staging Area'
+            const location = extractLocation(parseFloat(row.Latitude), parseFloat(row.Longitude))
             
             return {
               name: name,
@@ -138,7 +247,8 @@ export const parseStagingAreas = async (csvText) => {
               location: row.Location || '',
               latitude: parseFloat(row.Latitude),
               longitude: parseFloat(row.Longitude),
-              city: extractCity(parseFloat(row.Latitude), parseFloat(row.Longitude))
+              city: location.city,
+              province: location.province
             }
           })
         
