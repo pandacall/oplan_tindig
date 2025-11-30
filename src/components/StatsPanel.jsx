@@ -37,15 +37,20 @@ function StatsPanel({ cellSites, stagingAreas = [], isOpen, onToggle, dataTimest
             )}
           </div>
 
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 p-3 rounded-lg border border-blue-200 dark:border-blue-800/50 backdrop-blur-sm">
-            <div className="text-xs text-blue-700 dark:text-blue-300 mb-0.5 font-medium">Total Cell Sites</div>
-            <div className="text-2xl font-black text-blue-900 dark:text-blue-100">{total}</div>
-          </div>
-
           <div>
             <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
               Status
             </h3>
+            <div className="grid grid-cols-2 gap-1.5 mb-1.5">
+              <div className="flex flex-col p-2 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50 backdrop-blur-sm">
+                <span className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-0.5">Cell Sites</span>
+                <span className="text-xl font-black text-blue-900 dark:text-blue-100">{total}</span>
+              </div>
+              <div className="flex flex-col p-2 bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/30 dark:to-sky-950/30 rounded-lg border border-blue-200 dark:border-blue-800/50 backdrop-blur-sm">
+                <span className="text-xs text-blue-700 dark:text-blue-300 font-medium mb-0.5">Staging Areas</span>
+                <span className="text-xl font-black text-blue-900 dark:text-blue-100">{totalStagingAreas}</span>
+              </div>
+            </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between p-2 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg border border-green-200 dark:border-green-800/50 backdrop-blur-sm">
                 <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">Online</span>
@@ -86,11 +91,6 @@ function StatsPanel({ cellSites, stagingAreas = [], isOpen, onToggle, dataTimest
                 <span className="text-lg font-black text-green-700 dark:text-green-300">{lowRisk}</span>
               </div>
             </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/30 dark:to-sky-950/30 p-3 rounded-lg border border-blue-200 dark:border-blue-800/50 backdrop-blur-sm">
-            <div className="text-xs text-blue-700 dark:text-blue-300 mb-0.5 font-medium">Staging Areas</div>
-            <div className="text-2xl font-black text-blue-900 dark:text-blue-100">{totalStagingAreas}</div>
           </div>
 
           <div>
