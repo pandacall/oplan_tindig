@@ -84,25 +84,46 @@ export function getRiskLevel(distance) {
 /**
  * Calculate risk levels for all cell sites based on fault line
  * @param {Array} cellSites - Array of cell site objects
- * @param {Object} faultLineGeoJSON - GeoJSON object with LineString coordinates
+ * @param {Object} faultLineGeoJSON - GeoJSON object (Feature or FeatureCollection)
  * @returns {Array} - Cell sites with updated riskLevel property
  */
 export function calculateRiskLevels(cellSites, faultLineGeoJSON) {
-  if (!faultLineGeoJSON || !faultLineGeoJSON.geometry || !faultLineGeoJSON.geometry.coordinates) {
+  if (!faultLineGeoJSON) {
     console.warn('Invalid fault line GeoJSON, using default risk levels')
     return cellSites
   }
   
-  const lineCoordinates = faultLineGeoJSON.geometry.coordinates
+  // Handle FeatureCollection format (multiple LineString features)
+  let allLineCoordinates = []
+  if (faultLineGeoJSON.type === 'FeatureCollection' && faultLineGeoJSON.features) {
+    faultLineGeoJSON.features.forEach(feature => {
+      if (feature.geometry && feature.geometry.type === 'LineString') {
+        allLineCoordinates.push(feature.geometry.coordinates)
+      }
+    })
+  } 
+  // Handle single Feature format
+  else if (faultLineGeoJSON.geometry && faultLineGeoJSON.geometry.coordinates) {
+    allLineCoordinates.push(faultLineGeoJSON.geometry.coordinates)
+  } else {
+    console.warn('Invalid fault line GeoJSON format, using default risk levels')
+    return cellSites
+  }
   
   return cellSites.map(site => {
-    const distance = distanceToLineString([site.latitude, site.longitude], lineCoordinates)
-    const riskLevel = getRiskLevel(distance)
+    // Find minimum distance to any line segment
+    let minDistance = Infinity
+    allLineCoordinates.forEach(lineCoordinates => {
+      const distance = distanceToLineString([site.latitude, site.longitude], lineCoordinates)
+      minDistance = Math.min(minDistance, distance)
+    })
+    
+    const riskLevel = getRiskLevel(minDistance)
     
     return {
       ...site,
       riskLevel,
-      distanceToFault: distance
+      distanceToFault: minDistance
     }
   })
 }

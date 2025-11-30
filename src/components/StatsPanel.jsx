@@ -1,6 +1,6 @@
 ﻿import { RefreshCw } from 'lucide-react'
 
-function StatsPanel({ cellSites, stagingAreas = [], isOpen, onToggle, dataTimestamp, onClearCache }) {
+function StatsPanel({ cellSites, stagingAreas = [], isOpen, onToggle, dataTimestamp, onClearCache, showHighRisk = true, showMediumRisk = true, onToggleHighRisk, onToggleMediumRisk }) {
   const total = cellSites.length
   const online = cellSites.filter(s => s.status === 'online').length
   const offline = cellSites.filter(s => s.status === 'offline').length
@@ -63,14 +63,24 @@ function StatsPanel({ cellSites, stagingAreas = [], isOpen, onToggle, dataTimest
               Risk Distribution
             </h3>
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between p-2 bg-gradient-to-r from-red-100 to-rose-100 dark:from-red-950/50 dark:to-rose-950/50 rounded-lg border-2 border-red-300 dark:border-red-700 backdrop-blur-sm shadow-sm">
+              <button
+                onClick={onToggleHighRisk}
+                className={`w-full flex items-center justify-between p-2 bg-gradient-to-r from-red-100 to-rose-100 dark:from-red-950/50 dark:to-rose-950/50 rounded-lg border-2 backdrop-blur-sm shadow-sm transition-all hover:shadow-md ${
+                  showHighRisk ? 'border-red-300 dark:border-red-700' : 'border-gray-300 dark:border-gray-600 opacity-50'
+                }`}
+              >
                 <span className="text-xs text-gray-800 dark:text-gray-200 font-semibold">High Risk (&lt;5km)</span>
                 <span className="text-lg font-black text-red-700 dark:text-red-300">{highRisk}</span>
-              </div>
-              <div className="flex items-center justify-between p-2 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-950/50 dark:to-orange-950/50 rounded-lg border-2 border-yellow-300 dark:border-yellow-700 backdrop-blur-sm shadow-sm">
+              </button>
+              <button
+                onClick={onToggleMediumRisk}
+                className={`w-full flex items-center justify-between p-2 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-950/50 dark:to-orange-950/50 rounded-lg border-2 backdrop-blur-sm shadow-sm transition-all hover:shadow-md ${
+                  showMediumRisk ? 'border-yellow-300 dark:border-yellow-700' : 'border-gray-300 dark:border-gray-600 opacity-50'
+                }`}
+              >
                 <span className="text-xs text-gray-800 dark:text-gray-200 font-semibold">Medium Risk (5-15km)</span>
                 <span className="text-lg font-black text-yellow-700 dark:text-yellow-300">{mediumRisk}</span>
-              </div>
+              </button>
               <div className="flex items-center justify-between p-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-950/50 dark:to-emerald-950/50 rounded-lg border-2 border-green-300 dark:border-green-700 backdrop-blur-sm shadow-sm">
                 <span className="text-xs text-gray-800 dark:text-gray-200 font-semibold">Low Risk (&gt;15km)</span>
                 <span className="text-lg font-black text-green-700 dark:text-green-300">{lowRisk}</span>
@@ -151,14 +161,24 @@ function StatsPanel({ cellSites, stagingAreas = [], isOpen, onToggle, dataTimest
               Risk Distribution
             </h3>
             <div className="grid grid-cols-3 gap-1.5">
-              <div className="flex flex-col items-center p-2 bg-gradient-to-r from-red-100 to-rose-100 dark:from-red-950/50 dark:to-rose-950/50 rounded-lg border border-red-300 dark:border-red-700">
+              <button
+                onClick={onToggleHighRisk}
+                className={`flex flex-col items-center p-2 bg-gradient-to-r from-red-100 to-rose-100 dark:from-red-950/50 dark:to-rose-950/50 rounded-lg border transition-all ${
+                  showHighRisk ? 'border-red-300 dark:border-red-700' : 'border-gray-300 dark:border-gray-600 opacity-50'
+                }`}
+              >
                 <span className="text-[10px] text-gray-800 dark:text-gray-200 font-semibold">High</span>
                 <span className="text-lg font-black text-red-700 dark:text-red-300">{highRisk}</span>
-              </div>
-              <div className="flex flex-col items-center p-2 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-950/50 dark:to-orange-950/50 rounded-lg border border-yellow-300 dark:border-yellow-700">
+              </button>
+              <button
+                onClick={onToggleMediumRisk}
+                className={`flex flex-col items-center p-2 bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-950/50 dark:to-orange-950/50 rounded-lg border transition-all ${
+                  showMediumRisk ? 'border-yellow-300 dark:border-yellow-700' : 'border-gray-300 dark:border-gray-600 opacity-50'
+                }`}
+              >
                 <span className="text-[10px] text-gray-800 dark:text-gray-200 font-semibold">Medium</span>
                 <span className="text-lg font-black text-yellow-700 dark:text-yellow-300">{mediumRisk}</span>
-              </div>
+              </button>
               <div className="flex flex-col items-center p-2 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-950/50 dark:to-emerald-950/50 rounded-lg border border-green-300 dark:border-green-700">
                 <span className="text-[10px] text-gray-800 dark:text-gray-200 font-semibold">Low</span>
                 <span className="text-lg font-black text-green-700 dark:text-green-300">{lowRisk}</span>

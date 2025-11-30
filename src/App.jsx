@@ -22,7 +22,10 @@ function App() {
     status: 'all',
     provider: 'all',
     riskLevel: 'all',
-    showStagingAreas: true
+    showStagingAreas: true,
+    showRiskZones: true,
+    showHighRisk: true,
+    showMediumRisk: true
   })
   const [statsOpen, setStatsOpen] = useState(false)
   const [dataTimestamp, setDataTimestamp] = useState(null)
@@ -209,6 +212,7 @@ function App() {
             cellSites={filteredSites} 
             stagingAreas={filters.showStagingAreas ? stagingAreas : []}
             selectedCity={filters.city}
+            showRiskZones={filters.showRiskZones}
             isFullscreen={mapFullscreen}
             onToggleFullscreen={() => setMapFullscreen(!mapFullscreen)}
           />
@@ -224,6 +228,9 @@ function App() {
               cellSites={filteredSites} 
               stagingAreas={filters.showStagingAreas ? stagingAreas : []}
               selectedCity={filters.city}
+              showRiskZones={filters.showRiskZones}
+              showHighRisk={filters.showHighRisk}
+              showMediumRisk={filters.showMediumRisk}
               isFullscreen={mapFullscreen}
               onToggleFullscreen={() => setMapFullscreen(!mapFullscreen)}
             />
@@ -237,6 +244,10 @@ function App() {
               onToggle={() => setStatsOpen(!statsOpen)}
               dataTimestamp={dataTimestamp}
               onClearCache={clearCache}
+              showHighRisk={filters.showHighRisk}
+              showMediumRisk={filters.showMediumRisk}
+              onToggleHighRisk={() => setFilters(prev => ({ ...prev, showHighRisk: !prev.showHighRisk }))}
+              onToggleMediumRisk={() => setFilters(prev => ({ ...prev, showMediumRisk: !prev.showMediumRisk }))}
             />
           </div>
         </div>
@@ -250,6 +261,9 @@ function App() {
               cellSites={filteredSites} 
               stagingAreas={filters.showStagingAreas ? stagingAreas : []}
               selectedCity={filters.city}
+              showRiskZones={filters.showRiskZones}
+              showHighRisk={filters.showHighRisk}
+              showMediumRisk={filters.showMediumRisk}
               isFullscreen={mapFullscreen}
               onToggleFullscreen={() => setMapFullscreen(!mapFullscreen)}
             />
@@ -263,6 +277,10 @@ function App() {
               onToggle={() => setStatsOpen(!statsOpen)}
               dataTimestamp={dataTimestamp}
               onClearCache={clearCache}
+              showHighRisk={filters.showHighRisk}
+              showMediumRisk={filters.showMediumRisk}
+              onToggleHighRisk={() => setFilters(prev => ({ ...prev, showHighRisk: !prev.showHighRisk }))}
+              onToggleMediumRisk={() => setFilters(prev => ({ ...prev, showMediumRisk: !prev.showMediumRisk }))}
             />
           </div>
         </div>

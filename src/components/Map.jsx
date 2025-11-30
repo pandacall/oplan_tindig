@@ -1,10 +1,11 @@
-import { MapContainer, TileLayer, GeoJSON, Marker, Popup, Tooltip, Circle, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup, Tooltip, Circle, Polyline, Polygon, useMap } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import CellSitePopup from './CellSitePopup'
 import { Maximize2, Minimize2 } from 'lucide-react'
+import * as turf from '@turf/turf'
 
 // Fix for default marker icons in React-Leaflet
 delete L.Icon.Default.prototype._getIconUrl
@@ -74,7 +75,19 @@ function MapUpdater({ cellSites, selectedCity }) {
   return null
 }
 
-function Map({ cellSites, stagingAreas = [], selectedCity, isFullscreen, onToggleFullscreen }) {
+function Map({ 
+  cellSites, 
+  stagingAreas = [], 
+  selectedCity, 
+  selectedStatus, 
+  selectedProvider,
+  showStagingAreas = true,
+  showRiskZones = true,
+  showHighRisk = true,
+  showMediumRisk = true,
+  isFullscreen, 
+  onToggleFullscreen 
+}) {
   const [faultLineData, setFaultLineData] = useState(null)
   // NCR (Metro Manila) center coordinates
   const center = [14.5995, 120.9842]
@@ -83,9 +96,9 @@ function Map({ cellSites, stagingAreas = [], selectedCity, isFullscreen, onToggl
   const isMobile = window.innerWidth < 768
   const initialZoom = isMobile ? 10 : 11
 
-  // Load fault line GeoJSON
+  // Load simplified fault line GeoJSON
   useEffect(() => {
-    fetch('/fault-line.geojson')
+    fetch('/Big_one_simplified.geojson')
       .then(res => res.json())
       .then(data => setFaultLineData(data))
       .catch(err => console.error('Error loading fault line:', err))
@@ -97,13 +110,46 @@ function Map({ cellSites, stagingAreas = [], selectedCity, isFullscreen, onToggl
     opacity: 0.8
   }
 
-  // Extract coordinates for risk zone visualization
-  const getRiskZonePoints = () => {
-    if (!faultLineData || !faultLineData.geometry) return []
-    const coords = faultLineData.geometry.coordinates
-    // Sample every 3rd point to avoid too many circles
-    return coords.filter((_, index) => index % 3 === 0)
+  // Convert GeoJSON coordinates [lon, lat] to Leaflet format [lat, lon]
+  const convertCoordinates = (coords) => {
+    return coords.map(coord => [coord[1], coord[0]])
   }
+
+  // Create buffer polygons using Turf.js - keep as individual polygons
+  const bufferPolygons = useMemo(() => {
+    if (!faultLineData || !faultLineData.features) return { highRisk: [], mediumRisk: [] }
+    
+    console.log('Creating buffers for', faultLineData.features.length, 'features')
+    
+    const highRiskBuffers = []
+    const mediumRiskBuffers = []
+    
+    faultLineData.features.forEach((feature, index) => {
+      if (feature.geometry && feature.geometry.type === 'LineString') {
+        try {
+          // Create 5km buffer for high risk (red)
+          const highRiskBuffer = turf.buffer(feature, 5, { units: 'kilometers' })
+          if (highRiskBuffer) {
+            highRiskBuffers.push(highRiskBuffer)
+            console.log(`High risk buffer ${index + 1} created`)
+          }
+          
+          // Create 15km buffer for medium risk (yellow)
+          const mediumRiskBuffer = turf.buffer(feature, 15, { units: 'kilometers' })
+          if (mediumRiskBuffer) {
+            mediumRiskBuffers.push(mediumRiskBuffer)
+            console.log(`Medium risk buffer ${index + 1} created`)
+          }
+        } catch (err) {
+          console.error('Error creating buffer for feature', index, ':', err)
+        }
+      }
+    })
+    
+    console.log('Created buffers:', { high: highRiskBuffers.length, medium: mediumRiskBuffers.length })
+    
+    return { highRisk: highRiskBuffers, mediumRisk: mediumRiskBuffers }
+  }, [faultLineData])
 
   return (
     <div className="relative h-full w-full">
@@ -135,42 +181,44 @@ function Map({ cellSites, stagingAreas = [], selectedCity, isFullscreen, onToggl
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
+        {/* Risk Zones - Medium (15km buffer) - Yellow */}
+        {showRiskZones && showMediumRisk && bufferPolygons.mediumRisk.map((buffer, index) => (
+          <GeoJSON
+            key={`medium-risk-zone-${index}`}
+            data={buffer}
+            style={{
+              color: '#d97706',
+              fillColor: '#f59e0b',
+              fillOpacity: 0.15,
+              weight: 2,
+              opacity: 0.6
+            }}
+            className="risk-zone-medium"
+          />
+        ))}
+        
+        {/* Risk Zones - High (5km buffer) - Red */}
+        {showRiskZones && showHighRisk && bufferPolygons.highRisk.map((buffer, index) => (
+          <GeoJSON
+            key={`high-risk-zone-${index}`}
+            data={buffer}
+            style={{
+              color: '#ef4444',
+              fillColor: '#ef4444',
+              fillOpacity: 0.12,
+              weight: 2,
+              opacity: 0.4
+            }}
+            className="risk-zone-high"
+          />
+        ))}
+        
         {/* Fault Line */}
         {faultLineData && (
-          <>
-            <GeoJSON 
-              data={faultLineData} 
-              style={faultLineStyle}
-            />
-            
-            {/* Risk Zones - High (5km) and Medium (15km) */}
-            {getRiskZonePoints().map((coord, index) => (
-              <div key={`risk-zone-${index}`}>
-                <Circle
-                  center={[coord[1], coord[0]]}
-                  radius={5000}
-                  pathOptions={{
-                    color: '#ef4444',
-                    fillColor: '#ef4444',
-                    fillOpacity: 0.05,
-                    weight: 1,
-                    opacity: 0.2
-                  }}
-                />
-                <Circle
-                  center={[coord[1], coord[0]]}
-                  radius={15000}
-                  pathOptions={{
-                    color: '#f59e0b',
-                    fillColor: '#f59e0b',
-                    fillOpacity: 0.03,
-                    weight: 1,
-                    opacity: 0.15
-                  }}
-                />
-              </div>
-            ))}
-          </>
+          <GeoJSON 
+            data={faultLineData} 
+            style={faultLineStyle}
+          />
         )}
         
         {/* Map Updater for city zoom */}
