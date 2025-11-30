@@ -49,6 +49,15 @@
   background: #1f2937;
 }
 
+/* Permanent tooltip styles */
+.leaflet-tooltip-pane .leaflet-tooltip {
+  opacity: 1 !important;
+}
+
+.leaflet-tooltip.leaflet-tooltip-top {
+  margin-top: -8px;
+}
+
 /* Base styles */
 body {
   margin: 0;

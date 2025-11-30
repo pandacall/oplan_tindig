@@ -1,12 +1,13 @@
 ﻿import { RefreshCw } from 'lucide-react'
 
-function StatsPanel({ cellSites, isOpen, onToggle, dataTimestamp, onClearCache }) {
+function StatsPanel({ cellSites, stagingAreas = [], isOpen, onToggle, dataTimestamp, onClearCache }) {
   const total = cellSites.length
   const online = cellSites.filter(s => s.status === 'online').length
   const offline = cellSites.filter(s => s.status === 'offline').length
   const highRisk = cellSites.filter(s => s.riskLevel === 'high').length
   const mediumRisk = cellSites.filter(s => s.riskLevel === 'medium').length
   const lowRisk = cellSites.filter(s => s.riskLevel === 'low').length
+  const totalStagingAreas = stagingAreas.length
 
   return (
     <>
@@ -77,6 +78,11 @@ function StatsPanel({ cellSites, isOpen, onToggle, dataTimestamp, onClearCache }
             </div>
           </div>
 
+          <div className="bg-gradient-to-br from-blue-50 to-sky-50 dark:from-blue-950/30 dark:to-sky-950/30 p-3 rounded-lg border border-blue-200 dark:border-blue-800/50 backdrop-blur-sm">
+            <div className="text-xs text-blue-700 dark:text-blue-300 mb-0.5 font-medium">Staging Areas</div>
+            <div className="text-2xl font-black text-blue-900 dark:text-blue-100">{totalStagingAreas}</div>
+          </div>
+
           <div>
             <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
               Map Legend
@@ -89,6 +95,10 @@ function StatsPanel({ cellSites, isOpen, onToggle, dataTimestamp, onClearCache }
               <div className="flex items-center space-x-2">
                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
                 <span className="text-gray-700 dark:text-gray-300">Offline</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center text-white" style={{ fontSize: '8px', fontWeight: 'bold' }}>S</div>
+                <span className="text-gray-700 dark:text-gray-300">Staging Area</span>
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full opacity-30"></div>
@@ -114,7 +124,7 @@ function StatsPanel({ cellSites, isOpen, onToggle, dataTimestamp, onClearCache }
           </h2>
           
           {/* Compact grid layout for mobile */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 p-2 rounded-lg border border-blue-200 dark:border-blue-800/50">
               <div className="text-[10px] text-blue-700 dark:text-blue-300 font-medium">Total</div>
               <div className="text-xl font-black text-blue-900 dark:text-blue-100">{total}</div>
@@ -128,6 +138,11 @@ function StatsPanel({ cellSites, isOpen, onToggle, dataTimestamp, onClearCache }
             <div className="bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 p-2 rounded-lg border border-red-200 dark:border-red-800/50">
               <div className="text-[10px] text-red-700 dark:text-red-300 font-medium">Offline</div>
               <div className="text-xl font-black text-red-600 dark:text-red-400">{offline}</div>
+            </div>
+            
+            <div className="bg-gradient-to-r from-blue-50 to-sky-50 dark:from-blue-950/30 dark:to-sky-950/30 p-2 rounded-lg border border-blue-200 dark:border-blue-800/50">
+              <div className="text-[10px] text-blue-700 dark:text-blue-300 font-medium">Staging</div>
+              <div className="text-xl font-black text-blue-600 dark:text-blue-400">{totalStagingAreas}</div>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, GeoJSON, Marker, Popup, Circle, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, GeoJSON, Marker, Popup, Tooltip, Circle, useMap } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -14,18 +14,35 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 })
 
-// Custom marker icons - white circles with colored borders
-const createMarkerIcon = (borderColor) => {
+// Custom marker icons - white circles with colored borders and label
+const createMarkerIcon = (borderColor, label = '') => {
   return L.divIcon({
     className: 'custom-marker',
-    html: `<div style="background-color: white; width: 16px; height: 16px; border-radius: 50%; border: 3px solid ${borderColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+    html: `
+      <div style="position: relative; display: inline-block;">
+        <div style="background-color: white; width: 16px; height: 16px; border-radius: 50%; border: 3px solid ${borderColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+        ${label ? `<div style="position: absolute; top: -24px; left: 50%; transform: translateX(-50%); white-space: nowrap; background: rgba(255,255,255,0.9); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.3); pointer-events: none;">${label}</div>` : ''}
+      </div>
+    `,
     iconSize: [16, 16],
     iconAnchor: [8, 8]
   })
 }
 
-const onlineIcon = createMarkerIcon('#10b981')
-const offlineIcon = createMarkerIcon('#ef4444')
+// Staging area icon - circle with 'S' inside and label
+const createStagingAreaIcon = (label = '') => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `
+      <div style="position: relative; display: inline-block;">
+        <div style="background-color: white; width: 24px; height: 24px; border-radius: 50%; border: 3px solid #3b82f6; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: #3b82f6;">S</div>
+        ${label ? `<div style="position: absolute; top: -28px; left: 50%; transform: translateX(-50%); white-space: nowrap; background: rgba(255,255,255,0.9); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.3); pointer-events: none;">${label}</div>` : ''}
+      </div>
+    `,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
+  })
+}
 
 // Component to handle map zoom when city changes
 function MapUpdater({ cellSites, selectedCity }) {
@@ -57,7 +74,7 @@ function MapUpdater({ cellSites, selectedCity }) {
   return null
 }
 
-function Map({ cellSites, selectedCity, isFullscreen, onToggleFullscreen }) {
+function Map({ cellSites, stagingAreas = [], selectedCity, isFullscreen, onToggleFullscreen }) {
   const [faultLineData, setFaultLineData] = useState(null)
   // NCR (Metro Manila) center coordinates
   const center = [14.5995, 120.9842]
@@ -205,18 +222,81 @@ function Map({ cellSites, selectedCity, isFullscreen, onToggleFullscreen }) {
             })
           }}
         >
-          {cellSites.map((site, index) => (
-            <Marker
-              key={index}
-              position={[site.latitude, site.longitude]}
-              icon={site.status === 'online' ? onlineIcon : offlineIcon}
-              cellSite={site}
-            >
-              <Popup>
-                <CellSitePopup site={site} />
-              </Popup>
-            </Marker>
-          ))}
+          {cellSites.map((site, index) => {
+            const siteIcon = createMarkerIcon(
+              site.status === 'online' ? '#10b981' : '#ef4444',
+              site.siteName
+            )
+            return (
+              <Marker
+                key={index}
+                position={[site.latitude, site.longitude]}
+                icon={siteIcon}
+                cellSite={site}
+              >
+                <Popup>
+                  <CellSitePopup site={site} />
+                </Popup>
+              </Marker>
+            )
+          })}
+        </MarkerClusterGroup>
+        
+        {/* Staging Area Markers with Clustering */}
+        <MarkerClusterGroup
+          chunkedLoading={true}
+          maxClusterRadius={60}
+          spiderfyOnMaxZoom={true}
+          showCoverageOnHover={false}
+          disableClusteringAtZoom={14}
+          animate={true}
+          animateAddingMarkers={false}
+          removeOutsideVisibleBounds={true}
+          iconCreateFunction={(cluster) => {
+            const count = cluster.getChildCount()
+            return L.divIcon({
+              html: `
+                <div style="position: relative; width: 44px; height: 44px;">
+                  <svg width="44" height="44" style="position: absolute; top: 0; left: 0;">
+                    <circle cx="22" cy="22" r="19" fill="none" stroke="#3b82f6" stroke-width="4"/>
+                  </svg>
+                  <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                    background-color: white; width: 34px; height: 34px; border-radius: 50%; 
+                    display: flex; align-items: center; justify-content: center; font-weight: bold; 
+                    font-size: 13px; color: #3b82f6; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+                    ${count}
+                  </div>
+                </div>
+              `,
+              className: 'custom-cluster-icon',
+              iconSize: L.point(44, 44, true)
+            })
+          }}
+        >
+          {stagingAreas.map((area, index) => {
+            const areaIcon = createStagingAreaIcon(area.name)
+            return (
+              <Marker
+                key={`staging-${index}`}
+                position={[area.latitude, area.longitude]}
+                icon={areaIcon}
+              >
+                <Popup>
+                  <div className="p-2">
+                    <h3 className="font-bold text-sm text-blue-600 mb-1">{area.name}</h3>
+                    <div className="text-xs space-y-0.5">
+                      <p><span className="font-semibold">Type:</span> {area.function}</p>
+                      {area.location && <p><span className="font-semibold">Location:</span> {area.location}</p>}
+                      <p><span className="font-semibold">City:</span> {area.city}</p>
+                      <p className="text-gray-500">
+                        {area.latitude.toFixed(6)}, {area.longitude.toFixed(6)}
+                      </p>
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            )
+          })}
         </MarkerClusterGroup>
       </MapContainer>
     </div>

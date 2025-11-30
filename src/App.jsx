@@ -4,22 +4,25 @@ import Map from './components/Map'
 import FilterControls from './components/FilterControls'
 import StatsPanel from './components/StatsPanel'
 import CSVUploader from './components/CSVUploader'
-import { parseCellSites } from './utils/csvParser'
+import { parseCellSites, parseStagingAreas } from './utils/csvParser'
 import { calculateRiskLevels } from './utils/geoCalculations'
 
 // Combined data from Globe, DITO, and Converge
 const sampleDataUrl = '/combined-cellsites.csv'
-const CACHE_VERSION = 'v3' // Changed to v3 to force reload
+const stagingAreasUrl = '/Staging_Areas.csv'
+const CACHE_VERSION = 'v4' // Changed to v4 to include staging areas
 
 function App() {
   const [theme, setTheme] = useState('light')
   const [cellSites, setCellSites] = useState([])
+  const [stagingAreas, setStagingAreas] = useState([])
   const [filteredSites, setFilteredSites] = useState([])
   const [filters, setFilters] = useState({
     city: 'all',
     status: 'all',
     provider: 'all',
-    riskLevel: 'all'
+    riskLevel: 'all',
+    showStagingAreas: true
   })
   const [statsOpen, setStatsOpen] = useState(false)
   const [dataTimestamp, setDataTimestamp] = useState(null)
@@ -46,6 +49,7 @@ function App() {
         const parsed = JSON.parse(cachedData)
         console.log('Loaded', parsed.sites.length, 'cell sites from cache (v' + CACHE_VERSION + ')')
         setCellSites(parsed.sites)
+        setStagingAreas(parsed.stagingAreas || [])
         setFilteredSites(parsed.sites)
         setDataTimestamp(new Date(parsed.timestamp))
         setLoading(false)
@@ -90,7 +94,22 @@ function App() {
         Converge: sites.filter(s => s.provider === 'Converge').length
       })
       
+      // Load staging areas
+      let stagingAreasData = []
+      try {
+        console.log('Loading staging areas from CSV:', stagingAreasUrl)
+        const stagingResponse = await fetch(stagingAreasUrl + '?v=' + Date.now())
+        if (stagingResponse.ok) {
+          const stagingCsvText = await stagingResponse.text()
+          stagingAreasData = await parseStagingAreas(stagingCsvText)
+          console.log('Loaded staging areas:', stagingAreasData.length)
+        }
+      } catch (err) {
+        console.warn('Could not load staging areas:', err)
+      }
+      
       setCellSites(sites)
+      setStagingAreas(stagingAreasData)
       setFilteredSites(sites)
       const now = new Date()
       setDataTimestamp(now)
@@ -98,6 +117,7 @@ function App() {
       // Persist to localStorage with version
       localStorage.setItem(cacheKey, JSON.stringify({
         sites,
+        stagingAreas: stagingAreasData,
         timestamp: now.toISOString()
       }))
       console.log('Cached data with version:', CACHE_VERSION)
@@ -187,6 +207,7 @@ function App() {
         <div className="fixed inset-0 z-40 lg:hidden">
           <Map 
             cellSites={filteredSites} 
+            stagingAreas={filters.showStagingAreas ? stagingAreas : []}
             selectedCity={filters.city}
             isFullscreen={mapFullscreen}
             onToggleFullscreen={() => setMapFullscreen(!mapFullscreen)}
@@ -201,6 +222,7 @@ function App() {
           <div className="h-1/2 lg:h-full lg:flex-1 relative">
             <Map 
               cellSites={filteredSites} 
+              stagingAreas={filters.showStagingAreas ? stagingAreas : []}
               selectedCity={filters.city}
               isFullscreen={mapFullscreen}
               onToggleFullscreen={() => setMapFullscreen(!mapFullscreen)}
@@ -210,6 +232,7 @@ function App() {
           <div className="flex-1 lg:flex-initial lg:h-full overflow-y-auto">
             <StatsPanel 
               cellSites={filteredSites}
+              stagingAreas={stagingAreas}
               isOpen={statsOpen}
               onToggle={() => setStatsOpen(!statsOpen)}
               dataTimestamp={dataTimestamp}
@@ -225,6 +248,7 @@ function App() {
           <div className="h-full lg:flex-1 relative">
             <Map 
               cellSites={filteredSites} 
+              stagingAreas={filters.showStagingAreas ? stagingAreas : []}
               selectedCity={filters.city}
               isFullscreen={mapFullscreen}
               onToggleFullscreen={() => setMapFullscreen(!mapFullscreen)}
@@ -234,6 +258,7 @@ function App() {
           <div className="lg:flex-initial lg:h-full lg:w-80 overflow-y-auto">
             <StatsPanel 
               cellSites={filteredSites}
+              stagingAreas={stagingAreas}
               isOpen={statsOpen}
               onToggle={() => setStatsOpen(!statsOpen)}
               dataTimestamp={dataTimestamp}

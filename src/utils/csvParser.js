@@ -100,4 +100,60 @@ const extractCity = (lat, lon) => {
   return 'Metro Manila'
 }
 
+// Parse staging areas from CSV
+export const parseStagingAreas = async (csvText) => {
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvText, {
+      header: true,
+      dynamicTyping: false,
+      skipEmptyLines: true,
+      complete: (results) => {
+        if (results.errors.length > 0) {
+          console.warn('CSV parsing warnings:', results.errors)
+        }
+        
+        console.log('Raw parsed staging areas:', results.data.length, 'rows')
+        
+        const stagingAreas = results.data
+          .filter(row => {
+            const lat = parseFloat(row.Latitude)
+            const lon = parseFloat(row.Longitude)
+            const hasLat = !isNaN(lat) && lat !== 0
+            const hasLon = !isNaN(lon) && lon !== 0
+            
+            if (!hasLat || !hasLon) {
+              console.warn('Invalid staging area coordinates:', row)
+              return false
+            }
+            
+            return true
+          })
+          .map((row, index) => {
+            const name = row.LGU_Site_Name ? String(row.LGU_Site_Name).trim() : 'Unknown Staging Area'
+            const func = row.Function ? String(row.Function).trim() : 'Staging Area'
+            
+            return {
+              name: name,
+              function: func,
+              location: row.Location || '',
+              latitude: parseFloat(row.Latitude),
+              longitude: parseFloat(row.Longitude),
+              city: extractCity(parseFloat(row.Latitude), parseFloat(row.Longitude))
+            }
+          })
+        
+        console.log(`✅ Parsed ${stagingAreas.length} valid staging areas from CSV`)
+        if (stagingAreas.length > 0) {
+          console.log('First staging area:', stagingAreas[0])
+        }
+        resolve(stagingAreas)
+      },
+      error: (error) => {
+        console.error('CSV parsing error:', error)
+        reject(error)
+      }
+    })
+  })
+}
+
 export default parseCellSites
