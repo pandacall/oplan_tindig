@@ -89,6 +89,7 @@ function Map({
   onToggleFullscreen 
 }) {
   const [faultLineData, setFaultLineData] = useState(null)
+  const [westValleyFaultData, setWestValleyFaultData] = useState(null)
   // NCR (Metro Manila) center coordinates
   const center = [14.5995, 120.9842]
   
@@ -96,12 +97,20 @@ function Map({
   const isMobile = window.innerWidth < 768
   const initialZoom = isMobile ? 10 : 11
 
-  // Load simplified fault line GeoJSON
+  // Load simplified fault line GeoJSON (for buffer zones only, not visible)
   useEffect(() => {
     fetch('/Big_one_simplified.geojson')
       .then(res => res.json())
       .then(data => setFaultLineData(data))
-      .catch(err => console.error('Error loading fault line:', err))
+      .catch(err => console.error('Error loading simplified fault line:', err))
+  }, [])
+
+  // Load West Valley Fault System GeoJSON (visible fault line)
+  useEffect(() => {
+    fetch('/West_Valley_Fault_System_Philippines.geojson')
+      .then(res => res.json())
+      .then(data => setWestValleyFaultData(data))
+      .catch(err => console.error('Error loading West Valley Fault System:', err))
   }, [])
 
   const faultLineStyle = {
@@ -213,10 +222,10 @@ function Map({
           />
         ))}
         
-        {/* Fault Line */}
-        {faultLineData && (
+        {/* West Valley Fault System - Detailed visible fault line */}
+        {westValleyFaultData && (
           <GeoJSON 
-            data={faultLineData} 
+            data={westValleyFaultData} 
             style={faultLineStyle}
           />
         )}
